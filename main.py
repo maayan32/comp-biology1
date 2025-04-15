@@ -4,8 +4,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 # Magic numbers
-GRID_SIZE = 100
-GENERATIONS = 300
+GRID_SIZE = 10
+GENERATIONS = 20
 DEFAULT_PROBABILITY = 0.5
 
 
@@ -42,6 +42,26 @@ def create_initial_grid(prob_one):
         [1 if random.random() < prob_one else 0 for _ in range(GRID_SIZE)]
         for _ in range(GRID_SIZE)
     ])
+
+
+def create_glider_grid():
+    grid = np.zeros((GRID_SIZE, GRID_SIZE), dtype=int)
+
+    # Exmple for initial parttern in the center of the grid
+    center = GRID_SIZE // 2
+    pattern = [
+        [0, 1, 0, 0, 0],
+        [0, 0, 1, 0, 0],
+        [1, 1, 1, 0, 0],
+        [0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0],
+    ]
+
+    for i in range(5):
+        for j in range(5):
+            grid[center - 2 + i][center - 2 + j] = pattern[i][j]
+
+    return grid
 
 
 # Display grid with matplotlib
@@ -126,6 +146,21 @@ def compute_stability(prev, curr):
     return (unchanged / total) * 100  # percent
 
 
+# Compute alive cells
+def count_alive_cells(grid):
+    return np.sum(grid)
+
+
+# Compute changes in alive cells from the last generation
+def count_alive_change(prev, curr):
+    return np.sum(curr) - np.sum(prev)
+
+
+# Compute variance
+def compute_variance(grid):
+    return np.var(grid)
+
+
 # Simulation for question 1
 def run_simulation():
     prob = get_initial_probability()
@@ -136,10 +171,13 @@ def run_simulation():
 
     for gen in range(1, GENERATIONS + 1):
         if gen % 10 == 0:  # disply every 10 generations
-            display_grid(grid, gen)
+             display_grid(grid, gen)
         new_grid = update_grid(grid, wrap, gen)
         stability = compute_stability(grid, new_grid)
-        print(f"Generation {gen}: Stability = {stability:.2f}%")
+        alive_change = count_alive_change(grid, new_grid)
+        variance = compute_variance(new_grid)
+        alive_now = count_alive_cells(new_grid)
+        print( f"Generation {gen}: Stability = {stability:.2f}%, Δ Alive = {alive_change}, Alive now = {alive_now}, Variance = {variance:.4f}")
         grid = new_grid
 
     plt.close()
@@ -147,15 +185,27 @@ def run_simulation():
 
 # Placeholder for question 2 (gliders)
 def run_gliders_simulation():
-    print("Running gliders simulation (question 2)...")
-    # To be implemented
+    wrap = get_wrap_mode()
+    grid = create_glider_grid()
+
+    plt.figure(figsize=(12, 12))
+
+    for gen in range(1, GENERATIONS + 1):
+        display_grid(grid, gen)
+        new_grid = update_grid(grid, wrap, gen)
+        stability = compute_stability(grid, new_grid)
+        alive = count_alive_cells(new_grid)
+        print(f"Generation {gen}: Stability = {stability:.2f}%, Alive = {alive}")
+        grid = new_grid
+
+    plt.close()
+
 
 
 # Placeholder for question 3 (interesting patterns)
 def run_interesting_patterns():
-    print("Running interesting pattern tests (question 3)...")
-    # To be implemented
-
+    print("")
+    # ToDo
 
 # Main menu
 def main_menu():
