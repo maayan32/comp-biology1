@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages  
 
 
-# Magic numbers
+# Constants
 GRID_SIZE = 150
 GENERATIONS = 250
 DEFAULT_PROBABILITY = 0.5
@@ -13,7 +13,7 @@ DEFAULT_PROBABILITY = 0.5
 
 SAVE_FREQUENCY = 10
 
-
+# this function is called from the regular simulation to get the initial probability of a cell being alive
 def get_initial_probability():
     print("Select initial probability for cell = 1:")
     probabilities = [0.25, 0.5, 0.75]
@@ -30,7 +30,7 @@ def get_initial_probability():
         print("Invalid input. Defaulting to 50%.")
         return DEFAULT_PROBABILITY
 
-
+# this function is used to get the wanted wrap mode from the user
 def get_wrap_mode():
     print("Select boundary condition:")
     print("1. Regular (no wraparound)")
@@ -58,7 +58,8 @@ def get_interesting_pattern():
         print("Invalid input. Defaulting to still life.")
         return 0
 
-
+# this function creates the initial grid based on the user input for the probability of a cell being alive
+# its used for the first question and the glider simulation
 def create_initial_grid(prob_one):
     return np.array([
         [1 if random.random() < prob_one else 0 for _ in range(GRID_SIZE)]
@@ -197,33 +198,44 @@ def plot_grid(grid, generation, stats_text):
     
     plt.tight_layout()
 
-
+# this function holds the main logic of the automation, the rules of the 'game'. 
+# it updates the grid based on the rules of the automaton one generation at a time.
 def update_grid(grid, wraparound, generation):
     N = GRID_SIZE
     new_grid = copy.deepcopy(grid)
+    # this way we decide which cells (meaning red or blue block) to check based on the generation number
     offset = 0 if generation % 2 == 1 else 1
+    # iterate over the 4x4 blocks of cells in the grid
+    # the offset is used to determine which cells to check based on the generation number
     for i in range(offset, N, 2):
         for j in range(offset, N, 2):
+            # Check the 2x2 block of cells to determine the new state for the next generation
             block = []
             coords = []
+            # iterate over the 2x2 block of cells 
             for di in [0, 1]:
                 for dj in [0, 1]:
+                    # Get the coordinates of the cells in the block, take into account wraparound, if so go in a circle (%)
+
                     ni = (i + di) % N if wraparound else i + di
                     nj = (j + dj) % N if wraparound else j + dj
                     if ni >= N or nj >= N:
                         continue
                     block.append(grid[ni][nj])
                     coords.append((ni, nj))
-
+            # check if the block is valid (4 cells) (for non-wraparound mode)
             if len(block) < 4:
                 continue
-
+            # Count the number of alive cells in the block to determine what rules to apply
             count = sum(block)
+            # if two cells are alive, we do nothing
             if count == 2:
                 continue
+            # if 3 cells are alive, we flip the state of the block (1->0, 0->1)
             elif count in [0, 1, 4]:
                 for idx, (ni, nj) in enumerate(coords):
                     new_grid[ni][nj] = 1 - grid[ni][nj]
+            # if there are 3 alive cells, we flip the state of the block and rotate it 180 degrees clockwise
             elif count == 3:
                 flipped = [1 - x for x in block]
                 rotated = flipped[::-1]
@@ -231,21 +243,21 @@ def update_grid(grid, wraparound, generation):
                     new_grid[ni][nj] = rotated[idx]
     return new_grid
 
-
+# This function computes the stability of the grid by comparing the previous and current generations.
 def compute_stability(prev, curr):
     unchanged = np.sum(prev == curr)
     total = GRID_SIZE * GRID_SIZE
     return (unchanged / total) * 100
 
-
+# This function counts the number of alive cells in the grid.
 def count_alive_cells(grid):
     return np.sum(grid)
 
-
+# This function counts the change in the number of alive cells between two generations.
 def count_alive_change(prev, curr):
     return np.sum(curr) - np.sum(prev)
 
-
+# This function computes the variance of the grid to measure the distribution of alive cells.
 def compute_variance(grid):
     return np.var(grid)
 
