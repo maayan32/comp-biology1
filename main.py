@@ -1,14 +1,17 @@
 import random
 import copy
 import numpy as np
+import matplotlib
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages  
-
+import tkinter as tk
+from tkinter import messagebox, filedialog
 
 # Constants
 GRID_SIZE = 150
 GENERATIONS = 250
 DEFAULT_PROBABILITY = 0.5
+matplotlib.use("Agg")  # Non-interactive backend
 
 
 SAVE_FREQUENCY = 10
@@ -29,6 +32,32 @@ def get_initial_probability():
     else:
         print("Invalid input. Defaulting to 50%.")
         return DEFAULT_PROBABILITY
+    
+def get_initial_probability_gui():
+    root = tk.Tk()
+    root.withdraw()  # Hide the main window
+
+    choices = {"25%": 0.25, "50%": 0.5, "75%": 0.75}
+    choice = tk.StringVar()
+
+    def select():
+        root.quit()
+
+    top = tk.Toplevel()
+    def on_close():
+        root.quit()
+    top.protocol("WM_DELETE_WINDOW", on_close)
+    top.title("Select Initial Probability")
+    top.configure(bg="#f0f0f0")
+    tk.Label(top, text="Select initial probability for cell = 1:", font=("Helvetica", 12), bg="#f0f0f0").pack(pady=10)
+    for label, prob in choices.items():
+        tk.Radiobutton(top, text=label, variable=choice, value=prob, bg="#f0f0f0").pack(anchor='w', padx=20)
+    tk.Button(top, text="OK", command=select, bg="#4CAF50", fg="white", font=("Helvetica", 10, "bold"), width=10).pack(pady=15)
+
+    root.mainloop()
+    top.destroy()
+    return float(choice.get()) if choice.get() else DEFAULT_PROBABILITY
+
 
 # this function is used to get the wanted wrap mode from the user
 def get_wrap_mode():
@@ -57,6 +86,65 @@ def get_interesting_pattern():
     else:
         print("Invalid input. Defaulting to still life.")
         return 0
+    
+def get_interesting_pattern_gui():
+    root = tk.Tk()
+    root.withdraw()
+
+    patterns = [
+        "Still Life",
+        "Global Blinker",
+        "Period-4 Oscillator",
+        "Large Arrowhead"
+    ]
+    selection = tk.IntVar()
+    selection.set(0)
+
+    def submit():
+        root.quit()
+
+    top = tk.Toplevel()
+    def on_close():
+        root.quit()
+    top.protocol("WM_DELETE_WINDOW", on_close)
+    top.title("Choose Pattern")
+    top.configure(bg="#f0f0f0")
+    tk.Label(top, text="Select an interesting pattern:", font=("Helvetica", 12), bg="#f0f0f0").pack(pady=10)
+    for idx, name in enumerate(patterns):
+        tk.Radiobutton(top, text=name, variable=selection, value=idx, bg="#f0f0f0").pack(anchor='w', padx=20)
+    tk.Button(top, text="OK", command=submit, bg="#4CAF50", fg="white", font=("Helvetica", 10, "bold"), width=10).pack(pady=15)
+
+    root.mainloop()
+    top.destroy()
+    return selection.get()
+
+# GUI: Wrap Mode
+def get_wrap_mode_gui():
+    root = tk.Tk()
+    root.withdraw()
+    wrap_mode = tk.BooleanVar()
+
+    def choose_wrap():
+        wrap_mode.set(True)
+        root.quit()
+
+    def choose_regular():
+        wrap_mode.set(False)
+        root.quit()
+
+    top = tk.Toplevel()
+    def on_close():
+        root.quit()
+    top.protocol("WM_DELETE_WINDOW", on_close)
+    top.title("Boundary Condition")
+    top.configure(bg="#f0f0f0")
+    tk.Label(top, text="Select boundary condition:", font=("Helvetica", 12), bg="#f0f0f0").pack(pady=10)
+    tk.Button(top, text="Regular (no wraparound)", width=30, command=choose_regular, bg="#2196F3", fg="white").pack(pady=5)
+    tk.Button(top, text="Wraparound", width=30, command=choose_wrap, bg="#2196F3", fg="white").pack(pady=5)
+
+    root.mainloop()
+    top.destroy()
+    return wrap_mode.get()
 
 # this function creates the initial grid based on the user input for the probability of a cell being alive
 # its used for the first question and the glider simulation
@@ -291,16 +379,27 @@ def simulate_and_save(grid, wrap, pdf_path, include_alive_change=False, save_all
 
             grid = new_grid
 
+# GUI: PDF Filename
+def get_pdf_filename(default_name="simulation_report"):
+    root = tk.Tk()
+    root.withdraw()
+    filename = filedialog.asksaveasfilename(
+        defaultextension=".pdf",
+        filetypes=[("PDF files", "*.pdf")],
+        initialfile=default_name,
+        title="Save Simulation PDF"
+    )
+    root.destroy()
+    return filename or (default_name + ".pdf")
 
 # This function runs the main simulation based on user input for initial probability and wrap mode.
 def run_simulation():
     # Get the initial probability from the user
-    prob = get_initial_probability()
-    wrap = get_wrap_mode()
+    prob = get_initial_probability_gui()
+    wrap = get_wrap_mode_gui()
     # create the initial grid based on the user input
     grid = create_initial_grid(prob)
-    output_name = input("Enter the output PDF filename (without .pdf): ").strip() or "simulation_report"
-    pdf_path = output_name + ".pdf"
+    pdf_path = get_pdf_filename("simulation_report")
     
     simulate_and_save(grid, wrap, pdf_path, include_alive_change=True)
     print(f"\n✅ Saved full simulation report to '{pdf_path}'")
@@ -308,13 +407,12 @@ def run_simulation():
 # this function runs the glider grids simulation
 def run_gliders_simulation():
     # Get the wrap mode from the user
-    wrap = get_wrap_mode()
+    wrap = get_wrap_mode_gui()
     # create both beginning grids for the glider simulation
     grids = create_glider_grid()
     #  get the spisific grid that matches the wrap mode (0 for regular, 1 for wraparound)
     grid = grids[wrap]
-    output_name = input("Enter the output PDF filename (without .pdf): ").strip() or "gliders_report"
-    pdf_path = output_name + ".pdf"
+    pdf_path = get_pdf_filename("gliders_report")
 
     simulate_and_save(grid, wrap, pdf_path, include_alive_change=False)
     print(f"\n✅ Saved gliders report to '{pdf_path}'")
@@ -326,15 +424,58 @@ def run_interesting_patterns():
      # get the begining grids for the interesting patterns
     patterns = create_interesting_patterns()
     #get what pattern the user wants to see
-    pattern = get_interesting_pattern()
+    pattern = get_interesting_pattern_gui()
     grid = patterns[pattern]
-    output_name = input(f"Enter output PDF name for pattern: ").strip() or f"interesting_pattern_{pattern + 1}"
-    pdf_path = output_name + ".pdf"
+    pdf_path = get_pdf_filename(f"interesting_pattern_{pattern + 1}")
 
     simulate_and_save(grid, wrap, pdf_path, include_alive_change=False)
     print(f"\n✅ Saved interesting pattern to '{pdf_path}'")
 
+def gui_main_menu():
+    # Create the main window
+    window = tk.Tk()
+    window.protocol("WM_DELETE_WINDOW", lambda: on_exit())
+    window.title("Computational Biology Ex.1")
+    window.geometry("420x350")
+    window.configure(bg="#e6f2ff")
+    window.resizable(False, False)
 
+    tk.Label(window, text="Computational Biology Ex.1", font=("Helvetica", 18, "bold"), bg="#e6f2ff").pack(pady=25)
+
+    # Button functions
+    def on_run_simulation():
+        window.withdraw()
+        run_simulation()
+        messagebox.showinfo("Done", "Simulation completed successfully.")
+        window.deiconify()
+
+    def on_run_gliders():
+        window.withdraw()
+        run_gliders_simulation()
+        messagebox.showinfo("Done", "Gliders simulation completed.")
+        window.deiconify()
+
+    def on_run_patterns():
+        window.withdraw()
+        run_interesting_patterns()
+        messagebox.showinfo("Done", "Pattern simulation completed.")
+        window.deiconify()
+
+    def on_exit():
+        if messagebox.askokcancel("Exit", "Are you sure you want to exit?"):
+            window.destroy()
+        exit(0)
+
+    button_style = {"font": ("Helvetica", 11), "width": 30, "bg": "#4CAF50", "fg": "white"}
+
+    tk.Button(window, text="1. Run simulation", command=on_run_simulation, **button_style).pack(pady=7)
+    tk.Button(window, text="2. Run gliders simulation", command=on_run_gliders, **button_style).pack(pady=7)
+    tk.Button(window, text="3. Run interesting patterns", command=on_run_patterns, **button_style).pack(pady=7)
+    tk.Button(window, text="4. Exit", command=on_exit, bg="#f44336", fg="white", font=("Helvetica", 11), width=30).pack(pady=20)
+
+
+    # Run the GUI loop
+    window.mainloop()
 # This function displays the main menu and handles user input for running simulations.
 def main_menu():
     exit_flag = True
@@ -358,4 +499,4 @@ def main_menu():
         else:
             print("Invalid choice. Please try again.")
 if __name__ == "__main__":
-    main_menu()
+    gui_main_menu()
