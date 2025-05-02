@@ -6,6 +6,8 @@ import matplotlib.pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages  
 import tkinter as tk
 from tkinter import messagebox, filedialog
+import sys
+
 
 # Constants
 GRID_SIZE = 150
@@ -24,6 +26,7 @@ def get_initial_probability_gui():
 
     def select():
         root.quit()
+
 
     top = tk.Toplevel()
     def on_close():
@@ -55,6 +58,7 @@ def get_interesting_pattern_gui():
 
     def submit():
         root.quit()
+   
 
     top = tk.Toplevel()
     def on_close():
@@ -84,6 +88,7 @@ def get_wrap_mode_gui():
     def choose_regular():
         wrap_mode.set(False)
         root.quit()
+   
 
     top = tk.Toplevel()
     def on_close():
@@ -329,6 +334,8 @@ def simulate_and_save(grid, wrap, pdf_path, include_alive_change=False, save_all
             if (save_all_first_10 and gen <= 10) or gen % SAVE_FREQUENCY == 0:
                 plot_grid(new_grid, gen, stats)
                 pdf.savefig()
+                plt.close()
+
 
             grid = new_grid
 
@@ -336,6 +343,10 @@ def simulate_and_save(grid, wrap, pdf_path, include_alive_change=False, save_all
 def get_pdf_filename(default_name="simulation_report"):
     root = tk.Tk()
     root.withdraw()
+    
+    # Show a message box to inform the user
+    messagebox.showinfo("Information", "Please choose where to save the simulation PDF.")
+    
     filename = filedialog.asksaveasfilename(
         defaultextension=".pdf",
         filetypes=[("PDF files", "*.pdf")],
@@ -343,8 +354,12 @@ def get_pdf_filename(default_name="simulation_report"):
         title="Save Simulation PDF"
     )
     root.destroy()
-    return filename or (default_name + ".pdf")
-
+    
+    # Check if the user pressed Cancel (filename will be an empty string)
+    if not filename:
+        return None  # Return None if Cancel was pressed
+    
+    return filename  # Return the chosen filename
 # This function runs the main simulation based on user input for initial probability and wrap mode.
 def run_simulation():
     # Get the initial probability from the user
@@ -353,9 +368,16 @@ def run_simulation():
     # create the initial grid based on the user input
     grid = create_initial_grid(prob)
     pdf_path = get_pdf_filename("simulation_report")
-    
+    if pdf_path is None:
+        return # User pressed Cancel, exit the function
     simulate_and_save(grid, wrap, pdf_path, include_alive_change=True)
     print(f"\n✅ Saved full simulation report to '{pdf_path}'")
+     # Show messagebox on top
+    root = tk.Tk()
+    root.withdraw()  # Hide the root window
+    root.attributes("-topmost", True)  # Make it topmost
+    messagebox.showinfo("Done", "Simulation completed successfully.", parent=root)
+    root.destroy()
 
 # this function runs the glider grids simulation
 def run_gliders_simulation():
@@ -366,10 +388,17 @@ def run_gliders_simulation():
     #  get the spisific grid that matches the wrap mode (0 for regular, 1 for wraparound)
     grid = grids[wrap]
     pdf_path = get_pdf_filename("gliders_report")
+    if pdf_path is None:
+        return # User pressed Cancel, exit the function
 
     simulate_and_save(grid, wrap, pdf_path, include_alive_change=False)
     print(f"\n✅ Saved gliders report to '{pdf_path}'")
-
+     # Show messagebox on top
+    root = tk.Tk()
+    root.withdraw()  # Hide the root window
+    root.attributes("-topmost", True)  # Make it topmost
+    messagebox.showinfo("Done", "Simulation completed successfully.", parent=root)
+    root.destroy()
 # this function runs the interesting patterns simulation
 def run_interesting_patterns():
     # for this question we used wraparound mode only
@@ -380,9 +409,18 @@ def run_interesting_patterns():
     pattern = get_interesting_pattern_gui()
     grid = patterns[pattern]
     pdf_path = get_pdf_filename(f"interesting_pattern_{pattern + 1}")
+    if pdf_path is None:
+        return # User pressed Cancel, exit the function
 
     simulate_and_save(grid, wrap, pdf_path, include_alive_change=False)
     print(f"\n✅ Saved interesting pattern to '{pdf_path}'")
+     # Show messagebox on top
+    root = tk.Tk()
+    root.withdraw()  # Hide the root window
+    root.attributes("-topmost", True)  # Make it topmost
+    messagebox.showinfo("Done", "Simulation completed successfully.", parent=root)
+    root.destroy()
+
 
 def gui_main_menu():
     # Create the main window
@@ -399,25 +437,22 @@ def gui_main_menu():
     def on_run_simulation():
         window.withdraw()
         run_simulation()
-        messagebox.showinfo("Done", "Simulation completed successfully.")
         window.deiconify()
 
     def on_run_gliders():
         window.withdraw()
         run_gliders_simulation()
-        messagebox.showinfo("Done", "Gliders simulation completed.")
         window.deiconify()
 
     def on_run_patterns():
         window.withdraw()
         run_interesting_patterns()
-        messagebox.showinfo("Done", "Pattern simulation completed.")
         window.deiconify()
 
     def on_exit():
         if messagebox.askokcancel("Exit", "Are you sure you want to exit?"):
             window.destroy()
-        exit(0)
+        sys.exit(0)
 
     button_style = {"font": ("Helvetica", 11), "width": 30, "bg": "#4CAF50", "fg": "white"}
 
