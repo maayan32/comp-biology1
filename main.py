@@ -15,23 +15,6 @@ matplotlib.use("Agg")  # Non-interactive backend
 
 
 SAVE_FREQUENCY = 10
-
-# this function is called from the regular simulation to get the initial probability of a cell being alive
-def get_initial_probability():
-    print("Select initial probability for cell = 1:")
-    probabilities = [0.25, 0.5, 0.75]
-    for index, value in enumerate(probabilities):
-        print(f"{index + 1}. {value * 100}%")
-    choice = input("Enter 1, 2, or 3: ")
-    if choice == "1":
-        return probabilities[0]
-    elif choice == "2":
-        return probabilities[1]
-    elif choice == "3":
-        return probabilities[2]
-    else:
-        print("Invalid input. Defaulting to 50%.")
-        return DEFAULT_PROBABILITY
     
 def get_initial_probability_gui():
     root = tk.Tk()
@@ -57,35 +40,6 @@ def get_initial_probability_gui():
     root.mainloop()
     top.destroy()
     return float(choice.get()) if choice.get() else DEFAULT_PROBABILITY
-
-
-# this function is used to get the wanted wrap mode from the user
-def get_wrap_mode():
-    print("Select boundary condition:")
-    print("1. Regular (no wraparound)")
-    print("2. Wraparound")
-    choice = input("Enter 1 or 2: ")
-    return choice == "2"
-
-# this is for the user to choose what special pattern he wants to see in question 3
-def get_interesting_pattern():
-    print("Select an interesting pattern:")
-    print("1. still life")
-    print("2. global blinker")
-    print("3. Period-4 Oscillator")
-    print("4. Large Arrowhead")
-    choice = input("Enter 1, 2, 3 or 4: ")
-    if choice == "1":
-        return 0
-    elif choice == "2":
-        return 1
-    elif choice == "3":
-        return 2
-    elif choice == "4":
-        return 3
-    else:
-        print("Invalid input. Defaulting to still life.")
-        return 0
     
 def get_interesting_pattern_gui():
     root = tk.Tk()
@@ -476,27 +430,5 @@ def gui_main_menu():
 
     # Run the GUI loop
     window.mainloop()
-# This function displays the main menu and handles user input for running simulations.
-def main_menu():
-    exit_flag = True
-    while exit_flag:
-        print("Welcome to the Game of Life Simulation!")
-        print("1. Run simulation")
-        print("2. Run gliders simulation")
-        print("3. Run interesting patterns simulation")
-        print("4. Exit")
-        choice = input("Enter a number between 1-4: ")
-
-        if choice == "1":
-            run_simulation()
-        elif choice == "2":
-            run_gliders_simulation()
-        elif choice == "3":
-            run_interesting_patterns()
-        elif choice == "4":
-            exit_flag = False
-            print("Exiting the program.")
-        else:
-            print("Invalid choice. Please try again.")
 if __name__ == "__main__":
     gui_main_menu()
