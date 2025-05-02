@@ -11,10 +11,9 @@ from tkinter import messagebox, filedialog
 GRID_SIZE = 150
 GENERATIONS = 250
 DEFAULT_PROBABILITY = 0.5
-matplotlib.use("Agg")  # Non-interactive backend
-
-
 SAVE_FREQUENCY = 10
+
+matplotlib.use("Agg")  # Non-interactive backend - prevent matplotlib GUI plots display - plots appear only on the PDF
     
 def get_initial_probability_gui():
     root = tk.Tk()
